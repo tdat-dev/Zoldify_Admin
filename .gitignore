@@ -1,0 +1,49 @@
+# Dependencies
+/node_modules/
+/.pnp
+.pnp.js
+
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Build
+/build/
+/dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+*.pem
+
+# Logs
+*.log
+/logs/
+npm-debug.log*
+src/**/logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.agent
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code
+.claude/
+.superpowers/

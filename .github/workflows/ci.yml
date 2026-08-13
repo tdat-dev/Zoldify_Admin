@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  quality:
+    name: Lint, build, shared drift
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout admin
+        uses: actions/checkout@v4
+        with:
+          path: Zoldify_Admin
+
+      # check-shared so từng byte với bản gốc, nên PHẢI có repo kia nằm cạnh.
+      # Không checkout thì script tự bỏ qua và cổng kiểm trở thành trang trí.
+      - name: Checkout shop frontend (bản gốc của file dùng chung)
+        uses: actions/checkout@v4
+        with:
+          repository: tdat-dev/Zoldify_Frontend
+          path: Zoldify_Frontend
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: Zoldify_Admin/package-lock.json
+
+      - name: Install
+        working-directory: Zoldify_Admin
+        run: npm ci
+
+      - name: Shared files must match Zoldify_Frontend
+        working-directory: Zoldify_Admin
+        run: npm run check:shared
+
+      - name: Lint
+        working-directory: Zoldify_Admin
+        run: npm run lint
+
+      - name: Build
+        working-directory: Zoldify_Admin
+        run: npm run build

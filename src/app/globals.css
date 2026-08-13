@@ -1,0 +1,201 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 0.5rem;
+
+    /* --- Token màu Zoldify -------------------------------------------------
+       Viết dạng KÊNH RỜI "L C H", không bọc oklch(). Lý do đo được ngày
+       2026-08-06 bằng chính Tailwind CLI với config của project: khi biến chứa
+       một màu hoàn chỉnh (`var(--ink)` = `oklch(...)`), Tailwind v3 không chèn
+       được alpha nên BỎ IM LẶNG cả lớp — `border-ink/8` viết trong Header.tsx
+       ra 0 dòng CSS, không một cảnh báo nào, và viền rơi về xám #E2E8F0 của
+       rule `* { @apply border-border }`. Dạng kênh rời + <alpha-value> trong
+       tailwind.config sửa đúng chỗ đó. Chạy `npm run check:tokens` để canh.
+
+       Trung tính được nhuộm nhẹ về đúng hue thương hiệu (258) với chroma
+       0.004-0.012, thay vì xám trung tính chung chung. Nền trang KHÔNG dùng
+       tông kem/giấy: đây là sàn mua bán, không phải tạp chí.                */
+    /* Nền trang là XÁM NHẠT, khối nội dung màu trắng nổi lên trên — quy ước
+       chung của cả Shopee, Lazada và Amazon (xem ba trang ngày 2026-08-08).
+       Bản trước để nền trang gần trắng bằng đúng nền khối, nên trang không có
+       tầng: mọi thứ nằm phẳng trên một mặt duy nhất và ranh giới giữa các khối
+       phải nhờ hoàn toàn vào đường viền. */
+    --surface-page: 0.966 0.005 258;
+    --surface-card: 1 0 0;
+    --surface-sunken: 0.945 0.009 258;
+    /* Lấy mẫu pixel panel hero của ảnh mẫu ra #F3F6FF; bản 0.934/0.038 của tôi
+       ra #DAEBFF — đậm hơn hẳn, làm hero trông như một div bị tô màu chứ không
+       phải một không gian. Hạ về xấp xỉ mẫu. */
+    --brand-tint: 0.965 0.016 258;
+
+    /* Chrome hai tầng. CẤU TRÚC hai tầng lấy từ amazon.com, nhưng MÀU thì không:
+       bản đầu dùng 0.215/0.028 ra #111a26 — gần như đen-navy, tức là đúng màu
+       chrome của Amazon, và header đọc ra là của họ chứ không phải của Zoldify.
+
+       Đẩy chroma từ 0.028 lên 0.12 để nó ra một màu XANH đậm thật (#043574),
+       cùng hue 258 với brand #2C67C8. Chữ trắng trên nền này đo được 11.94:1,
+       tầng dưới 8.59:1. */
+    --chrome: 0.34 0.12 258;
+    --chrome-soft: 0.42 0.13 258;
+
+    --ink: 0.24 0.021 258;
+    --ink-muted: 0.505 0.019 258;
+    /* 0.62 đo được 3.63:1 trên nền trắng — dưới vạch 4.5. Đây là lỗi tầng TOKEN,
+       rơi vào 5 chỗ cùng lúc: tên người bán, giá gạch, "Xem hết", dấu phân cách,
+       nhãn thương hiệu. Tối lại để mọi chỗ dùng nó đều đạt.
+       Hạ tiếp 0.55 -> 0.532 ngày 2026-08-08: nền trang đổi sang xám thì 0.55 chỉ
+       còn 4.39:1 trên nền đó. Nền tối đi thì chữ mờ phải tối theo. */
+    --ink-faint: 0.532 0.019 258;
+
+    /* Đỏ cho giá và giảm giá — quy ước sàn TMĐT Việt. Đã chọn độ sáng đủ
+       tối để đạt 4.5:1 trên nền trắng ở cỡ chữ thường.                      */
+    --price: 0.545 0.208 27;
+    --price-bg: 0.955 0.038 27;
+
+    /* --- Token trạng thái ---------------------------------------------------
+       Năm vai trò, dùng chung cho MỌI loại trạng thái của site. Trước đây 5
+       trang đơn hàng mỗi trang tự bịa một bảng màu bằng yellow-100/green-100/
+       red-100, nên cùng một trạng thái "Chờ xác nhận" ra hai màu khác nhau ở
+       trang người mua và trang người bán.
+
+       Ánh xạ từ mã backend sang vai trò nằm ở src/lib/status.ts, không rải
+       khắp trang. Mã thật lấy từ Zoldify_Backend ngày 2026-08-06:
+       OrderStatus (7), PaymentStatus (3), EscrowStatus (4), ProductStatus (5),
+       WithdrawalStatus (4), ShopStatus (3).
+
+       Contrast fg-trên-bg canh bằng `npm run check:tokens`.                 */
+    --state-pending-fg: 0.50 0.12 75;
+    --state-pending-bg: 0.96 0.03 75;
+    --state-progress-fg: 0.48 0.13 258;
+    --state-progress-bg: 0.96 0.025 258;
+    --state-success-fg: 0.48 0.12 155;
+    --state-success-bg: 0.96 0.03 155;
+    --state-danger-fg: 0.50 0.18 27;
+    --state-danger-bg: 0.955 0.038 27;
+    --state-neutral-fg: 0.50 0.015 258;
+    --state-neutral-bg: 0.955 0.008 258;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  /* Nền trang do --surface-page quyết định. Trước đây chỗ này là bg-gray-50 và
+     layout.tsx còn bọc thêm một div bg-gray-50 nữa, nên token --surface-page
+     không bao giờ có tác dụng — khai báo một đằng, hiển thị một nẻo. */
+  body {
+    @apply bg-surface-page text-ink;
+  }
+}
+
+/* Cắt đúng 2 dòng cho tên sản phẩm.
+   Không dùng utility `line-clamp-2`: đo trên trang đã render thì `display` ra
+   `flow-root` chứ không phải `-webkit-box`, nên nó KHÔNG cắt dòng — chỉ có
+   overflow:hidden xén ngang, để lộ một vệt dòng thứ ba cụt đầu. Đặt ngoài
+   @layer để thắng utility trong cascade.
+   min-height = 2 dòng đúng bằng 2 x line-height, giữ mọi thẻ cao bằng nhau. */
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-height: 2.7em;
+}
+
+/* Nhịp vào của hero. CHỈ dịch chuyển, KHÔNG dùng opacity: nếu animation không
+   chạy vì bất cứ lý do gì thì nội dung vẫn hiện — khối bị ẩn vĩnh viễn là cách
+   hỏng tệ nhất của entrance animation. */
+@keyframes rise {
+  from {
+    transform: translateY(12px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.animate-rise {
+  animation: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Bỏ qua header, nhảy thẳng vào nội dung — trước đây phải Tab ~15 lần mới tới. */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -3rem;
+  z-index: 600;
+  padding: 0.6rem 1rem;
+  border-radius: 0 0 0.375rem 0.375rem;
+  background: #2c67c8;
+  color: #fff;
+  font-size: 0.875rem;
+  transition: top 0.15s ease-out;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* Người bật "giảm chuyển động" trong hệ điều hành không phải chịu animation nào. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-slide-up,
+  .animate-rise {
+    animation: none;
+  }
+}
+
