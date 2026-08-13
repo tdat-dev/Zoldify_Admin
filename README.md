@@ -121,6 +121,19 @@ báo chưa đăng nhập. Cần một `src/app/login/page.tsx` dùng `authServic
 
 ---
 
+## Một điều sẽ làm bạn giật mình khi xem HTML
+
+Tìm chuỗi `Tìm đồ cũ` hay `Đăng bán` trong HTML mà app này trả về thì **sẽ thấy**
+— nhưng chúng nằm trong khối JSON dịch mà `NextIntlClientProvider` nhúng xuống,
+không nằm trong markup. Đã kiểm ngày 13/08/2026: bóc hết thẻ `<script>` ra rồi
+thì markup không còn chuỗi nào của trang bán hàng.
+
+Nguyên nhân: `pull:messages` lấy nguyên cả nhóm `common`, mà nhóm đó có vài khoá
+chỉ trang bán hàng dùng (`searchPlaceholder`, `searchAria`…). Không phải lỗi,
+chỉ là vài trăm byte thừa. Cắt lẻ từng khoá thì `common` của hai app khác nhau,
+và lúc đó không còn dùng chung được nữa — cái giá đắt hơn nhiều so với chỗ byte
+tiết kiệm được.
+
 ## Lệnh
 
 | | |
