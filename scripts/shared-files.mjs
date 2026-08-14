@@ -52,6 +52,7 @@ export const SHARED_FILES = [
   'src/components/Toast.tsx',
   'src/components/BackButton.tsx',
   'src/components/EmptyState.tsx',
+  'src/components/StockControl.tsx',
 
   // Service khu quản trị gọi tới
   'src/services/category.service.ts',

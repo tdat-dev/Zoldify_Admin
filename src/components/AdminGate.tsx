@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 /**
@@ -21,22 +20,13 @@ import { useAuth } from '@/context/AuthContext';
  * làm — xem README.
  */
 export function AdminGate({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated, authReady } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (!authReady) return;
     if (typeof document !== 'undefined') {
       document.title = isAuthenticated ? document.title : 'Zoldify Admin';
     }
-  }, [authReady, isAuthenticated]);
-
-  if (!authReady) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-ink-muted" aria-hidden="true" />
-      </div>
-    );
-  }
+  }, [isAuthenticated]);
 
   if (!isAuthenticated || !user) {
     return (

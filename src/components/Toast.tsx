@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from 'next-intl';
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
@@ -22,9 +21,6 @@ const ToastContext = createContext<ToastContextType | null>(null);
 let toastId = 0;
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  // Đặt tên `tr` chứ không phải `t`: bên dưới `t` đã là biến của vòng lặp
-  // toasts.map((t) => …), đặt trùng là che mất nó.
-  const tr = useTranslations('common');
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [confirmState, setConfirmState] = useState<{
     message: string;
@@ -60,9 +56,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   };
 
   const colors: Record<ToastType, string> = {
-    success: 'bg-state-success-fg text-white',
-    error: 'bg-price text-white',
-    warning: 'bg-state-pending-fg text-white',
+    success: 'bg-green-600 text-white',
+    error: 'bg-red-600 text-white',
+    warning: 'bg-orange-500 text-white',
     info: 'bg-brand text-white',
   };
 
@@ -86,7 +82,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <span className="flex-1">{t.message}</span>
             <button
               onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}
-              aria-label={tr('dismiss')}
+              aria-label="Đóng thông báo"
               className="ml-2 opacity-70 hover:opacity-100 transition-opacity"
             >
               <X className="w-4 h-4" aria-hidden="true" />
@@ -100,21 +96,21 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div role="alertdialog" aria-modal="true" className="bg-white rounded-2xl shadow-2xl p-7 max-w-sm w-full mx-4 animate-slide-up">
             <div className="flex items-start gap-3 mb-5">
-              <AlertTriangle className="w-6 h-6 text-state-pending-fg flex-shrink-0 mt-0.5" aria-hidden="true" />
-              <p className="text-ink font-medium leading-relaxed">{confirmState.message}</p>
+              <AlertTriangle className="w-6 h-6 text-orange-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <p className="text-gray-800 font-medium leading-relaxed">{confirmState.message}</p>
             </div>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => handleConfirm(false)}
-                className="px-5 py-2 border border-ink/16 text-ink-muted rounded-lg hover:bg-surface-sunken text-sm font-medium transition-colors"
+                className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors"
               >
-                {tr('cancel')}
+                Hủy
               </button>
               <button
                 onClick={() => handleConfirm(true)}
-                className="px-5 py-2 bg-price text-white rounded-lg hover:bg-state-danger-fg text-sm font-medium transition-colors"
+                className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium transition-colors"
               >
-                {tr('confirm')}
+                Xác nhận
               </button>
             </div>
           </div>

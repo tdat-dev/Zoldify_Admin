@@ -21,13 +21,12 @@ import { SOURCE_REPO } from './shared-files.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.resolve(ROOT, SOURCE_REPO);
 
-/** Nhóm khoá khu quản trị dùng. Thiếu nhóm nào thì thêm vào đây. */
+/** Nhóm khoá khu quản trị KÉO từ Frontend. `admin` và `adminWithdrawals` đã
+ *  chuyển hẳn sang repo này — sửa tay ở đây, không kéo nữa. */
 const NAMESPACES = [
   'meta',            // tiêu đề tab, skip link — layout gốc dùng
   'common',          // nút, trạng thái tải, phân trang
   'errors',
-  'admin',           // sẽ chuyển hẳn sang repo này
-  'adminWithdrawals',// sẽ chuyển hẳn sang repo này
   'orderStatus',
   'orderStatusShort',
   'withdrawalStatus',
@@ -58,11 +57,19 @@ for (const locale of LOCALES) {
     process.exit(1);
   }
 
+  // Đọc file hiện tại để giữ lại các nhóm repo này tự quản (admin,
+  // adminWithdrawals…). Chỉ ghi đè các nhóm trong NAMESPACES.
   const to = path.join(ROOT, 'src/i18n/messages', `${locale}.json`);
-  fs.mkdirSync(path.dirname(to), { recursive: true });
-  fs.writeFileSync(to, JSON.stringify(picked, null, 2) + '\n', 'utf8');
+  let existing = {};
+  if (fs.existsSync(to)) {
+    existing = JSON.parse(fs.readFileSync(to, 'utf8'));
+  }
+  const merged = { ...existing, ...picked };
 
-  const count = Object.values(picked).reduce(
+  fs.mkdirSync(path.dirname(to), { recursive: true });
+  fs.writeFileSync(to, JSON.stringify(merged, null, 2) + '\n', 'utf8');
+
+  const count = Object.values(merged).reduce(
     (n, group) => n + Object.keys(group).length, 0);
-  console.log(`  ${locale}.json — ${NAMESPACES.length} nhóm, ${count} khoá`);
+  console.log(`  ${locale}.json — ${Object.keys(merged).length} nhóm, ${count} khoá`);
 }
