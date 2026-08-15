@@ -6,6 +6,7 @@ import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { ToastProvider } from '@/components/Toast';
 import { AdminGate } from '@/components/AdminGate';
+import AdminNav from '@/components/AdminNav';
 
 /**
  * Vỏ của app quản trị.
@@ -52,7 +53,18 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <ToastProvider>
-              <AdminGate>{children}</AdminGate>
+              <AdminGate>
+                {/*
+                  Layout 2 cột: sidebar cố định bên trái (desktop) hoặc
+                  topbar + drawer (mobile). AdminNav tự xử lý responsive.
+                */}
+                <div className="flex min-h-screen">
+                  <AdminNav />
+                  <main className="flex-1 overflow-x-hidden">
+                    {children}
+                  </main>
+                </div>
+              </AdminGate>
             </ToastProvider>
           </AuthProvider>
         </NextIntlClientProvider>
@@ -60,3 +72,4 @@ export default async function RootLayout({
     </html>
   );
 }
+
