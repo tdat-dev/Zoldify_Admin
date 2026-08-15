@@ -1,0 +1,58 @@
+name: Deploy Admin
+
+# nhánh chore/deploy-docker -> PRODUCTION (admin.zoldify.com)
+# nhánh staging            -> STAGING   (admin-staging.zoldify.com)
+# Admin build chung trong web compose trên VPS (service `admin`).
+
+on:
+  push:
+    branches:
+      - chore/deploy-docker
+      - staging
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-admin-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lint --if-present
+        continue-on-error: true
+
+  deploy:
+    name: Deploy to VPS
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            REF='${{ github.ref_name }}'
+            if [ "$REF" = "staging" ]; then
+              SRC=/opt/staging/zoldify-admin; WEB=/opt/staging/zoldify-web
+            else
+              SRC=/opt/zoldify-admin; WEB=/opt/zoldify-web
+            fi
+            cd "$SRC"
+            git fetch origin "$REF"
+            git checkout -f -B "$REF" "origin/$REF"
+            cd "$WEB"
+            docker compose up -d --build admin
+            docker image prune -f || true
+            echo "Deployed admin $REF"
