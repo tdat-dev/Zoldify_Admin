@@ -55,12 +55,13 @@ export const SHARED_FILES = [
   'src/components/StockControl.tsx',
 
   // Service khu quản trị gọi tới
+  // LƯU Ý: withdrawal.service.ts KHÔNG nằm ở đây vì bản Admin có thêm
+  // các hàm adminList/approve/reject/complete mà Frontend không cần.
   'src/services/category.service.ts',
   'src/services/order.service.ts',
   'src/services/product.service.ts',
   'src/services/setting.service.ts',
   'src/services/upload.service.ts',
-  'src/services/withdrawal.service.ts',
 
   // Cấu hình i18n (bộ khoá dịch thì KHÔNG dùng chung — xem README)
   'src/i18n/request.ts',
