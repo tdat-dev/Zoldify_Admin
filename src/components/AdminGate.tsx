@@ -10,8 +10,8 @@ import { Lock, Mail, Loader2, ShieldAlert } from 'lucide-react';
  */
 export function AdminGate({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, login, logout } = useAuth();
-  const [email, setEmail] = useState('admin@zoldify.com');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -95,9 +95,6 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-slate-400">
-            Tài khoản mẫu: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">admin@zoldify.com</code> / <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">123456</code>
-          </p>
         </div>
       </main>
     );
