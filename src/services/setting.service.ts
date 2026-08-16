@@ -23,6 +23,24 @@ export const SETTING_KEYS = {
    *   - trang này (bật/tắt)
    */
   maintenanceMode: 'maintenance_mode',
+  /** Thông tin liên hệ — hiển thị trên footer trang chính. */
+  contactEmail: 'contact_email',
+  contactPhone: 'contact_phone',
+  contactAddress: 'contact_address',
+  contactFacebook: 'contact_facebook',
+  contactZalo: 'contact_zalo',
+  /** Cấu hình Email SMTP. */
+  smtpHost: 'smtp_host',
+  smtpPort: 'smtp_port',
+  smtpUser: 'smtp_user',
+  smtpPass: 'smtp_pass',
+  smtpFromName: 'smtp_from_name',
+  smtpFromEmail: 'smtp_from_email',
+  /** Cấu hình thanh toán. */
+  payosClientId: 'payos_client_id',
+  payosApiKey: 'payos_api_key',
+  payosChecksumKey: 'payos_checksum_key',
+  sepayWebhookSecret: 'sepay_webhook_secret',
 } as const;
 
 export const settingService = {

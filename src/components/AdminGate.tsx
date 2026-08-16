@@ -55,15 +55,18 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Email Admin</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
+                  name="admin_email_fake"
+                  autoComplete="off"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLogin(e as any)}
                   placeholder="admin@zoldify.com"
                   required
                   className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800"
@@ -77,8 +80,11 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
+                  name="admin_password_fake"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLogin(e as any)}
                   placeholder="••••••••"
                   required
                   className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800"
@@ -87,13 +93,14 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
             </div>
 
             <button
-              type="submit"
+              type="button"
+              onClick={handleLogin}
               disabled={loading}
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Đăng nhập Admin'}
             </button>
-          </form>
+          </div>
 
         </div>
       </main>

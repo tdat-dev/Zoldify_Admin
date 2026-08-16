@@ -90,17 +90,18 @@ export default function AdminOrdersPage() {
 
   const fetchStatusCounts = useCallback(async () => {
     try {
+      // Lấy tất cả đơn rồi đếm trên client — thay vì gọi 5 request riêng lẻ
+      // (cách cũ gọi 5 API song song gây ThrottlerException: Too Many Requests)
+      const res = await http.get('/orders', { params: { limit: 9999, currentPage: 1 } });
+      const data = res.data?.data || res.data;
+      const allOrders: Order[] = data?.result || [];
       const counts: Record<OrderStatus, number> = { pending: 0, confirmed: 0, shipping: 0, delivered: 0, cancelled: 0 };
-      await Promise.all(
-        STATUS_OPTIONS.map(async (s) => {
-          const res = await http.get('/orders', { params: { status: s, limit: 1, currentPage: 1 } });
-          const data = res.data?.data || res.data;
-          counts[s] = data?.meta?.total ?? 0;
-        })
-      );
+      allOrders.forEach((o) => {
+        if (counts[o.status] !== undefined) counts[o.status]++;
+      });
       setStatusCounts(counts);
     } catch {
-      // ignore
+      // bỏ qua lỗi đếm
     }
   }, []);
 

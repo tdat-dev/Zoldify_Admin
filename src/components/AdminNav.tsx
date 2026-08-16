@@ -13,8 +13,10 @@ import {
   Shield,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 /**
  * Thanh điều hướng chính của khu quản trị.
@@ -37,6 +39,7 @@ const NAV_ITEMS = [
 
 export default function AdminNav() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Đóng menu khi chuyển trang
@@ -74,6 +77,30 @@ export default function AdminNav() {
     </ul>
   );
 
+  /** Khối thông tin user + nút đăng xuất — dùng chung cho sidebar và drawer */
+  const logoutBlock = (
+    <div className="border-t border-ink/8 px-3 py-3">
+      <div className="flex items-center gap-3 px-3 py-2">
+        {/* Avatar tròn hiển thị chữ cái đầu */}
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand text-xs font-bold uppercase">
+          {user?.full_name?.charAt(0) || 'A'}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-ink">{user?.full_name || 'Admin'}</p>
+          <p className="truncate text-xs text-ink-muted">{user?.email || ''}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={logout}
+        className="mt-1 flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-small font-medium text-red-600 transition-colors hover:bg-red-50"
+      >
+        <LogOut className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+        Đăng xuất
+      </button>
+    </div>
+  );
+
   return (
     <>
       {/* === SIDEBAR — Desktop (lg trở lên) === */}
@@ -91,6 +118,9 @@ export default function AdminNav() {
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           {navContent}
         </nav>
+
+        {/* Thông tin user + Đăng xuất */}
+        {logoutBlock}
       </aside>
 
       {/* === TOPBAR — Mobile (dưới lg) === */}
@@ -126,14 +156,18 @@ export default function AdminNav() {
           />
           {/* Drawer */}
           <nav
-            className="fixed inset-y-0 left-0 z-modal w-[260px] overflow-y-auto bg-surface-card p-4 shadow-float lg:hidden"
+            className="fixed inset-y-0 left-0 z-modal w-[260px] flex flex-col overflow-y-auto bg-surface-card shadow-float lg:hidden"
             aria-label="Điều hướng quản trị"
           >
-            <div className="mb-4 flex items-center gap-2">
+            <div className="mb-4 flex items-center gap-2 p-4">
               <Shield className="h-5 w-5 text-brand" aria-hidden="true" />
               <span className="text-h3 font-bold text-ink">Zoldify Admin</span>
             </div>
-            {navContent}
+            <div className="flex-1 px-4">
+              {navContent}
+            </div>
+            {/* Thông tin user + Đăng xuất (mobile) */}
+            {logoutBlock}
           </nav>
         </>
       )}
