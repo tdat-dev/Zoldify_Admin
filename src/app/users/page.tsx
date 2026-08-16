@@ -89,7 +89,7 @@ export default function AdminUsersPage() {
     setConfirmAction(null);
     setTogglingId(user.id);
     try {
-      const res = await http.patch(`/users/${user.id}/toggle-lock`);
+      const res = await http.patch(`/admin/users/${user.id}/toggle-lock`);
       const updated = res.data?.data;
       setUsers((prev) =>
         prev.map((u) => (u.id === user.id ? { ...u, is_locked: updated?.is_locked ?? !u.is_locked } : u))
@@ -142,7 +142,7 @@ export default function AdminUsersPage() {
     }
     setSavingRole(true);
     try {
-      await http.patch(`/users/${editingUser.id}/role`, { role: newRole });
+      await http.patch(`/admin/users/${editingUser.id}/role`, { role: newRole });
       setUsers((prev) =>
         prev.map((u) => (u.id === editingUser.id ? { ...u, role: newRole as User['role'] } : u))
       );
