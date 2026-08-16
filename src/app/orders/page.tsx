@@ -5,6 +5,7 @@ import { ShoppingCart, Eye, Loader2, Search, ChevronDown, MapPin, Phone, User as
 import http from '@/lib/http';
 import { useToast } from '@/components/Toast';
 import BackButton from '@/components/BackButton';
+import { imageUrl } from '@/lib/format';
 
 type OrderStatus = 'pending' | 'confirmed' | 'shipping' | 'delivered' | 'cancelled';
 
@@ -413,7 +414,7 @@ export default function AdminOrdersPage() {
                       <div className="w-14 h-14 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
                         {item.product?.image || item.product_image ? (
                           <img
-                            src={(item.product?.image || item.product_image || '').startsWith('http') ? (item.product?.image || item.product_image || '') : `http://localhost:3000/${item.product?.image || item.product_image}`}
+                            src={imageUrl(item.product?.image || item.product_image) || ''}
                             alt={item.product_name}
                             className="w-full h-full object-cover"
                           />
