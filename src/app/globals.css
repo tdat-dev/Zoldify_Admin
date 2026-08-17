@@ -120,6 +120,17 @@
   }
 }
 
+/* Ẩn mũi tên tăng/giảm (spin buttons) của input type="number" 
+   để tránh layout bị nhảy khi focus/hover. */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
 /* Cắt đúng 2 dòng cho tên sản phẩm.
    Không dùng utility `line-clamp-2`: đo trên trang đã render thì `display` ra
    `flow-root` chứ không phải `-webkit-box`, nên nó KHÔNG cắt dòng — chỉ có
