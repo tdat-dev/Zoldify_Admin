@@ -3,11 +3,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit, Trash2, Box, Loader2, Eye, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Box, Loader2, Eye, Search, Lock } from 'lucide-react';
 import { productService } from '@/services/product.service';
 import StockControl from '@/components/StockControl';
 import { useToast } from '@/components/Toast';
+import ConfirmModal from '@/components/ConfirmModal';
 import BackButton from '@/components/BackButton';
+import ProductModal, { ProductModalMode } from '@/components/ProductModal';
 
 export default function AdminProductsPage() {
   const router = useRouter();
@@ -16,6 +18,20 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [meta, setMeta] = useState({ current: 1, pageSize: 20, total: 0, pages: 0 });
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<ProductModalMode>('add');
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const openModal = (mode: ProductModalMode, product?: any) => {
+    setModalMode(mode);
+    setSelectedProduct(product || null);
+    setModalOpen(true);
+  };
 
   const fetchProducts = useCallback(async (page = 1, q = '') => {
     setLoading(true);
@@ -36,16 +52,26 @@ export default function AdminProductsPage() {
     fetchProducts(1, '');
   }, [fetchProducts]);
 
-  const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Xóa sản phẩm "${name}"?\nHành động này không thể hoàn tác.`)) return;
+  const confirmDelete = (id: number, name: string) => {
+    setProductToDelete({ id, name });
+    setDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!productToDelete) return;
+    setDeleting(true);
     try {
-      await productService.remove(id);
-      toast('Đã xóa sản phẩm', 'success');
+      await productService.remove(productToDelete.id);
+      toast('Đã khóa sản phẩm', 'success');
       fetchProducts(meta.current, search);
       window.dispatchEvent(new CustomEvent('admin-stats-refresh'));
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Lỗi xóa sản phẩm';
+      const msg = err.response?.data?.message || 'Lỗi khóa sản phẩm';
       toast(Array.isArray(msg) ? msg[0] : msg, 'error');
+    } finally {
+      setDeleting(false);
+      setDeleteModalOpen(false);
+      setProductToDelete(null);
     }
   };
 
@@ -79,13 +105,13 @@ export default function AdminProductsPage() {
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </form>
-          <Link
-            href="/products/create"
+          <button
+            onClick={() => openModal('add')}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             <span>Thêm</span>
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -126,8 +152,11 @@ export default function AdminProductsPage() {
                           className="w-12 h-12 object-cover rounded-lg border bg-gray-100"
                         />
                         <div>
-                          <div className="font-medium text-gray-800 line-clamp-1 max-w-xs">
+                          <div className="font-medium text-gray-800 line-clamp-1 max-w-xs flex items-center gap-2">
                             {product.name}
+                            {product.status === 'banned' && (
+                              <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] rounded-full uppercase font-bold whitespace-nowrap">Đã khóa</span>
+                            )}
                           </div>
                           <div className="text-xs text-gray-600">ID: #{product.id}</div>
                         </div>
@@ -151,26 +180,31 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center justify-center gap-1">
-                        <Link
-                          href={`/product/${product.id}`}
+                        <button
+                          onClick={() => openModal('view', product)}
                           className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
                           title="Xem"
                         >
                           <Eye className="w-4 h-4" />
-                        </Link>
+                        </button>
                         <button
-                          onClick={() => router.push(`/product/${product.id}/edit`)}
+                          onClick={() => openModal('edit', product)}
                           className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition"
                           title="Sửa"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(product.id, product.name)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                          title="Xóa"
+                          onClick={() => confirmDelete(product.id, product.name)}
+                          disabled={product.status === 'banned'}
+                          className={`p-2 rounded-lg transition ${
+                            product.status === 'banned'
+                              ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                              : 'text-orange-600 hover:bg-orange-50'
+                          }`}
+                          title={product.status === 'banned' ? 'Đã khóa' : 'Khóa'}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Lock className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -199,6 +233,25 @@ export default function AdminProductsPage() {
           ))}
         </div>
       )}
+
+      <ProductModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSuccess={() => fetchProducts(meta.current, search)}
+        mode={modalMode}
+        product={selectedProduct}
+      />
+
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        title="Khóa sản phẩm"
+        message={`Bạn có chắc chắn muốn khóa sản phẩm "${productToDelete?.name}" do vi phạm chính sách?\nSản phẩm sẽ bị ẩn khỏi kết quả tìm kiếm và không thể giao dịch.`}
+        confirmText="Khóa"
+        confirmColor="red"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteModalOpen(false)}
+        isLoading={deleting}
+      />
     </div>
   );
 }
