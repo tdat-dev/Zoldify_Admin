@@ -197,11 +197,10 @@ export default function AdminProductsPage() {
                         <button
                           onClick={() => confirmDelete(product.id, product.name)}
                           disabled={product.status === 'banned'}
-                          className={`p-2 rounded-lg transition ${
-                            product.status === 'banned'
+                          className={`p-2 rounded-lg transition ${product.status === 'banned'
                               ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
                               : 'text-orange-600 hover:bg-orange-50'
-                          }`}
+                            }`}
                           title={product.status === 'banned' ? 'Đã khóa' : 'Khóa'}
                         >
                           <Lock className="w-4 h-4" />
@@ -222,11 +221,10 @@ export default function AdminProductsPage() {
             <button
               key={p}
               onClick={() => fetchProducts(p, search)}
-              className={`w-9 h-9 rounded-lg text-sm font-medium ${
-                p === meta.current
+              className={`w-9 h-9 rounded-lg text-sm font-medium ${p === meta.current
                   ? 'bg-blue-600 text-white'
                   : 'bg-white text-gray-600 hover:bg-gray-100 border'
-              }`}
+                }`}
             >
               {p}
             </button>
@@ -300,7 +298,9 @@ function StockEditor({
         compact
         disabled={saving}
       />
-      {saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />}
+      <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+        {saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />}
+      </div>
     </div>
   );
 }
