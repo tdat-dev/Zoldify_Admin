@@ -67,6 +67,7 @@ export default function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
+  const [simulating, setSimulating] = useState<'shipping' | 'delivered' | null>(null);
   const [statusCounts, setStatusCounts] = useState<Record<OrderStatus, number>>({
     pending: 0, confirmed: 0, shipping: 0, delivered: 0, cancelled: 0,
   });
@@ -129,6 +130,34 @@ export default function AdminOrdersPage() {
       toast(Array.isArray(msg) ? msg[0] : msg, 'error');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  /**
+   * TẠM, chỉ cho sandbox: GHN dev không có shipper thật nên vận đơn không tự
+   * đổi trạng thái. Backend chặn endpoint này khi GHN_HOST không phải sandbox.
+   * "shipping" = GHN đã lấy hàng, đơn sang Đang giao.
+   * "delivered" = GHN giao tới cửa; đơn vẫn Đang giao cho tới khi người mua
+   * bấm "Đã nhận hàng" (hoặc hệ thống tự chốt), lúc đó mới nhả tiền.
+   */
+  const handleSimulateGhn = async (order: Order, phase: 'shipping' | 'delivered') => {
+    setSimulating(phase);
+    try {
+      await http.patch(`/orders/${order.id}/sim-ghn`, { phase });
+      if (phase === 'shipping') {
+        setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: 'shipping' } : o)));
+        setViewingOrder({ ...order, status: 'shipping' });
+        toast('Giả lập GHN đã lấy hàng: đơn chuyển sang Đang giao', 'success');
+      } else {
+        toast('Giả lập GHN đã giao tới cửa. Chờ người mua bấm "Đã nhận hàng" để nhả tiền', 'success');
+      }
+      fetchStatusCounts();
+      window.dispatchEvent(new CustomEvent('admin-stats-refresh'));
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Giả lập GHN thất bại';
+      toast(Array.isArray(msg) ? msg[0] : msg, 'error');
+    } finally {
+      setSimulating(null);
     }
   };
 
@@ -355,6 +384,41 @@ export default function AdminOrdersPage() {
                   <div className="text-sm text-gray-800">{formatDate(viewingOrder.created_at)}</div>
                 </div>
               </div>
+
+              {/* Giả lập GHN (tạm, chỉ sandbox) */}
+              {(viewingOrder.status === 'confirmed' ||
+                (viewingOrder.status as string) === 'processing' ||
+                viewingOrder.status === 'shipping') && (
+                <div className="border border-dashed border-purple-300 bg-purple-50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-purple-800 mb-1 flex items-center gap-2">
+                    <Truck className="w-4 h-4" /> Giả lập GHN (sandbox)
+                  </h3>
+                  <p className="text-xs text-purple-700 mb-3">
+                    GHN sandbox không có shipper thật. Bấm để đẩy vận đơn sang bước tiếp theo thay vì vào app GHN.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {viewingOrder.status !== 'shipping' ? (
+                      <button
+                        onClick={() => handleSimulateGhn(viewingOrder, 'shipping')}
+                        disabled={simulating !== null}
+                        className="px-4 py-2 text-sm rounded-lg border border-purple-300 bg-white text-purple-800 font-medium hover:bg-purple-100 disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {simulating === 'shipping' && <Loader2 className="w-4 h-4 animate-spin" />}
+                        GHN đã lấy hàng → Đang giao
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleSimulateGhn(viewingOrder, 'delivered')}
+                        disabled={simulating !== null}
+                        className="px-4 py-2 text-sm rounded-lg border border-purple-300 bg-white text-purple-800 font-medium hover:bg-purple-100 disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {simulating === 'delivered' && <Loader2 className="w-4 h-4 animate-spin" />}
+                        GHN đã giao tới cửa
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Customer */}
               <div className="bg-gray-50 rounded-lg p-4">
