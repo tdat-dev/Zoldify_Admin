@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Lock, Mail, Loader2, ShieldAlert } from 'lucide-react';
 
@@ -14,6 +14,9 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Chặn gửi chồng: giữ phím Enter sinh keydown lặp liên tục, và vài lần có
+  // thể tới trước khi state `loading` kịp render lại. Ref đổi ngay lập tức.
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -23,6 +26,8 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setLoading(true);
     setError('');
     try {
@@ -30,6 +35,7 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại Email và Mật khẩu.');
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };
@@ -66,7 +72,7 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
                   autoComplete="off"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin(e as any)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.repeat && !loading && handleLogin(e as any)}
                   placeholder="admin@zoldify.com"
                   required
                   className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800"
@@ -84,7 +90,7 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin(e as any)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.repeat && !loading && handleLogin(e as any)}
                   placeholder="••••••••"
                   required
                   className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800"
