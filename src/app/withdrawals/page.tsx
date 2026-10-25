@@ -154,16 +154,18 @@ export default function AdminWithdrawalsPage() {
       else await withdrawalService.complete(row.id);
 
       toast(t(`done_${action}`, { amount: formatPrice(Number(row.amount || 0)) }), 'success');
-      closeDialog();
-      // Đọc lại từ server. Sửa trạng thái ngay trong state ở client sẽ đúng
-      // trong đa số trường hợp và sai đúng lúc quan trọng nhất — khi backend
-      // từ chối thao tác vì lệnh đã bị người khác xử lý trước đó.
-      fetchRows(page, statusFilter);
     } catch (err: any) {
+      // Backend khoá dòng rồi kiểm lại trạng thái, nên lệnh đã bị admin khác
+      // xử lý sẽ trả 400/409. Hiện đúng thông báo của backend.
       const msg = err.response?.data?.message;
       toast(Array.isArray(msg) ? msg[0] : msg || t(`failed_${action}`), 'error');
     } finally {
       setBusyId(null);
+      // Đóng hộp thoại và đọc lại từ server cả khi lỗi. Trước đây lỗi thì hộp
+      // thoại vẫn mở và bảng không tải lại, nên lệnh người khác đã xử lý vẫn
+      // hiện "chờ duyệt" và admin bấm lại mãi vào một lệnh không còn hợp lệ.
+      closeDialog();
+      fetchRows(page, statusFilter);
     }
   };
 
