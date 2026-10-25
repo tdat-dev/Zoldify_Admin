@@ -91,15 +91,17 @@ export default function AdminOrdersPage() {
 
   const fetchStatusCounts = useCallback(async () => {
     try {
-      // Lấy tất cả đơn rồi đếm trên client — thay vì gọi 5 request riêng lẻ
-      // (cách cũ gọi 5 API song song gây ThrottlerException: Too Many Requests)
-      const res = await http.get('/orders', { params: { limit: 9999, currentPage: 1 } });
-      const data = res.data?.data || res.data;
-      const allOrders: Order[] = data?.result || [];
+      // Backend chưa có endpoint đếm theo trạng thái. Cách cũ tải limit=9999
+      // rồi đếm trên client, nhưng backend ép page size tối đa 100 nên quá 100
+      // đơn là đếm sai. Ở đây hỏi từng trạng thái với limit=1 và đọc meta.total.
+      // Gọi TUẦN TỰ, không song song: 5 request cùng lúc từng dính
+      // ThrottlerException (giới hạn 10 request/giây).
       const counts: Record<OrderStatus, number> = { pending: 0, confirmed: 0, shipping: 0, delivered: 0, cancelled: 0 };
-      allOrders.forEach((o) => {
-        if (counts[o.status] !== undefined) counts[o.status]++;
-      });
+      for (const s of STATUS_OPTIONS) {
+        const res = await http.get('/orders', { params: { status: s, limit: 1, currentPage: 1 } });
+        const data = res.data?.data || res.data;
+        counts[s] = Number(data?.meta?.total) || 0;
+      }
       setStatusCounts(counts);
     } catch {
       // bỏ qua lỗi đếm
