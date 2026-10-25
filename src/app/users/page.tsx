@@ -47,7 +47,9 @@ export default function AdminUsersPage() {
       if (search) params.q = search;
       if (roleFilter) params.role = roleFilter;
       if (lockFilter) params.is_locked = lockFilter;
-      const res = await http.get('/users', { params });
+      // Phải gọi /admin/users: GET /users đọc current/pageSize và bỏ qua
+      // q/role/is_locked, nên ô tìm, bộ lọc và phân trang không có tác dụng.
+      const res = await http.get('/admin/users', { params });
       const data = res.data?.data || res.data;
       setUsers(data?.result || []);
       setMeta(data?.meta || { current: 1, pageSize: 20, total: 0, pages: 0 });
@@ -117,7 +119,8 @@ export default function AdminUsersPage() {
     setConfirmAction(null);
     setDeletingId(user.id);
     try {
-      await http.delete(`/users/${user.id}`);
+      // Xoá qua /admin để đi qua AdminGuard và được ghi nhật ký hành động admin.
+      await http.delete(`/admin/users/${user.id}`);
       toast('Đã xóa người dùng', 'success');
       setUsers((prev) => prev.filter((u) => u.id !== user.id));
       setMeta((m) => ({ ...m, total: m.total - 1 }));
