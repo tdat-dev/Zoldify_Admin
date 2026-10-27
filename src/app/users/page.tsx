@@ -383,7 +383,10 @@ export default function AdminUsersPage() {
 
             <div className="space-y-2 mb-6">
               <label className="text-sm font-medium text-gray-700 block">Vai trò mới</label>
-              {(['buyer', 'seller', 'moderator', 'admin'] as const).map((r) => (
+              {/* Không có 'moderator': backend không cho đặt vai này nữa (không chỗ nào
+                  dùng tới, gán vào chỉ làm người đó mất quyền bán/quản trị). User cũ
+                  còn mang vai này vẫn hiện nhãn ở bảng và lọc được. */}
+              {(['buyer', 'seller', 'admin'] as const).map((r) => (
                 <label
                   key={r}
                   className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
@@ -402,12 +405,11 @@ export default function AdminUsersPage() {
                   />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-800 capitalize">
-                      {r === 'buyer' ? 'Người mua' : r === 'seller' ? 'Người bán' : r === 'moderator' ? 'Kiểm duyệt viên' : 'Quản trị viên'}
+                      {r === 'buyer' ? 'Người mua' : r === 'seller' ? 'Người bán' : 'Quản trị viên'}
                     </p>
                     <p className="text-xs text-gray-600">
                       {r === 'buyer' && 'Chỉ mua hàng'}
                       {r === 'seller' && 'Đăng bán sản phẩm'}
-                      {r === 'moderator' && 'Kiểm duyệt nội dung'}
                       {r === 'admin' && 'Toàn quyền quản trị'}
                     </p>
                   </div>
