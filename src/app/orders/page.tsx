@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { ShoppingCart, Eye, Loader2, Search, ChevronDown, MapPin, Phone, User as UserIcon, Package, X, Clock, Truck, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Eye, Loader2, Search, ChevronDown, MapPin, Phone, User as UserIcon, Package, X, Clock, Truck, CheckCircle2, XCircle, AlertCircle, Banknote } from 'lucide-react';
 import http from '@/lib/http';
 import { useToast } from '@/components/Toast';
 import BackButton from '@/components/BackButton';
 import { imageUrl } from '@/lib/format';
 
-type OrderStatus = 'pending' | 'confirmed' | 'shipping' | 'delivered' | 'cancelled';
+type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipping' | 'delivered' | 'cancelled' | 'refunded';
 
 interface OrderItem {
   id: number;
@@ -21,13 +21,14 @@ interface OrderItem {
 
 interface Order {
   id: number;
-  code: string;
+  order_code: string;
   total_amount: number | string;
   shipping_fee: number | string;
   discount: number | string;
   final_amount: number | string;
   status: OrderStatus;
   payment_method: string;
+  is_paid?: boolean;
   payment_status?: string;
   receiver_name: string;
   receiver_phone: string;
@@ -43,20 +44,24 @@ interface Order {
 const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: 'Chờ xử lý',
   confirmed: 'Đã xác nhận',
+  processing: 'Đang chuẩn bị',
   shipping: 'Đang giao',
   delivered: 'Hoàn thành',
   cancelled: 'Đã hủy',
+  refunded: 'Đã hoàn tiền',
 };
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
   confirmed: 'bg-blue-100 text-blue-700',
+  processing: 'bg-indigo-100 text-indigo-700',
   shipping: 'bg-purple-100 text-purple-700',
   delivered: 'bg-green-100 text-green-700',
   cancelled: 'bg-red-100 text-red-700',
+  refunded: 'bg-gray-200 text-gray-700',
 };
 
-const STATUS_OPTIONS: OrderStatus[] = ['pending', 'confirmed', 'shipping', 'delivered', 'cancelled'];
+const STATUS_OPTIONS: OrderStatus[] = ['pending', 'confirmed', 'processing', 'shipping', 'delivered', 'cancelled', 'refunded'];
 
 export default function AdminOrdersPage() {
   const { toast } = useToast();
@@ -68,8 +73,11 @@ export default function AdminOrdersPage() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [simulating, setSimulating] = useState<'shipping' | 'delivered' | null>(null);
+  // Id đơn đang ở bước xác nhận: mở đơn khác thì bước này không đi theo.
+  const [confirmPaidId, setConfirmPaidId] = useState<number | null>(null);
+  const [markingPaid, setMarkingPaid] = useState(false);
   const [statusCounts, setStatusCounts] = useState<Record<OrderStatus, number>>({
-    pending: 0, confirmed: 0, shipping: 0, delivered: 0, cancelled: 0,
+    pending: 0, confirmed: 0, processing: 0, shipping: 0, delivered: 0, cancelled: 0, refunded: 0,
   });
 
   const fetchOrders = useCallback(async (p = 1) => {
@@ -96,7 +104,7 @@ export default function AdminOrdersPage() {
       // đơn là đếm sai. Ở đây hỏi từng trạng thái với limit=1 và đọc meta.total.
       // Gọi TUẦN TỰ, không song song: 5 request cùng lúc từng dính
       // ThrottlerException (giới hạn 10 request/giây).
-      const counts: Record<OrderStatus, number> = { pending: 0, confirmed: 0, shipping: 0, delivered: 0, cancelled: 0 };
+      const counts: Record<OrderStatus, number> = { pending: 0, confirmed: 0, processing: 0, shipping: 0, delivered: 0, cancelled: 0, refunded: 0 };
       for (const s of STATUS_OPTIONS) {
         const res = await http.get('/orders', { params: { status: s, limit: 1, currentPage: 1 } });
         const data = res.data?.data || res.data;
@@ -163,6 +171,32 @@ export default function AdminOrdersPage() {
     }
   };
 
+  /**
+   * Ghi đã thu tiền đơn COD. Đây là lệnh tiền: nó ghi tiền vào két giữ hộ và tách
+   * ký quỹ cho người bán, không có đường bấm ngược, nên phải qua một bước xác
+   * nhận nêu rõ số tiền. Thiếu bước này người mua bấm "Đã nhận hàng" sẽ bị từ
+   * chối, tiền không bao giờ tới người bán.
+   */
+  const handleMarkCodPaid = async (order: Order) => {
+    setMarkingPaid(true);
+    try {
+      await http.patch(`/orders/${order.id}/status`, { is_paid: true });
+      setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, is_paid: true } : o)));
+      setViewingOrder({ ...order, is_paid: true });
+      toast(`Đã ghi thu ${formatCurrency(order.final_amount)} cho đơn ${order.order_code}`, 'success');
+      window.dispatchEvent(new CustomEvent('admin-stats-refresh'));
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Ghi nhận thu tiền thất bại';
+      toast(Array.isArray(msg) ? msg[0] : msg, 'error');
+      // Lỗi thường do đơn vừa đổi ở nơi khác: tải lại để nút không nói sai.
+      fetchOrders(page);
+      setViewingOrder(null);
+    } finally {
+      setMarkingPaid(false);
+      setConfirmPaidId(null);
+    }
+  };
+
   const formatCurrency = (v: number | string) => {
     const n = Number(v) || 0;
     return n.toLocaleString('vi-VN') + 'đ';
@@ -177,9 +211,11 @@ export default function AdminOrdersPage() {
   const statusCards: { key: OrderStatus; label: string; bg: string; text: string }[] = [
     { key: 'pending', label: 'Chờ xử lý', bg: 'bg-yellow-50 border-yellow-200', text: 'text-yellow-700' },
     { key: 'confirmed', label: 'Đã xác nhận', bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700' },
+    { key: 'processing', label: 'Đang chuẩn bị', bg: 'bg-indigo-50 border-indigo-200', text: 'text-indigo-700' },
     { key: 'shipping', label: 'Đang giao', bg: 'bg-purple-50 border-purple-200', text: 'text-purple-700' },
     { key: 'delivered', label: 'Hoàn thành', bg: 'bg-green-50 border-green-200', text: 'text-green-700' },
     { key: 'cancelled', label: 'Đã hủy', bg: 'bg-red-50 border-red-200', text: 'text-red-700' },
+    { key: 'refunded', label: 'Đã hoàn tiền', bg: 'bg-gray-100 border-gray-300', text: 'text-gray-700' },
   ];
 
   return (
@@ -215,7 +251,7 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Status Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
         {statusCards.map((c) => (
           <div
             key={c.key}
@@ -262,7 +298,7 @@ export default function AdminOrdersPage() {
                 orders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50 transition">
                     <td className="py-4 px-6">
-                      <span className="font-mono text-sm font-medium text-gray-800">{order.code}</span>
+                      <span className="font-mono text-sm font-medium text-gray-800">{order.order_code}</span>
                       <div className="text-xs text-gray-600 mt-0.5">{order.items?.length || 0} sản phẩm</div>
                     </td>
                     <td className="py-4 px-6">
@@ -369,7 +405,7 @@ export default function AdminOrdersPage() {
             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-gray-800">Chi tiết đơn hàng</h2>
-                <p className="text-sm text-gray-600 font-mono">{viewingOrder.code}</p>
+                <p className="text-sm text-gray-600 font-mono">{viewingOrder.order_code}</p>
               </div>
               <button onClick={() => setViewingOrder(null)} className="p-1 hover:bg-gray-100 rounded">
                 <X className="w-5 h-5" />
@@ -419,6 +455,53 @@ export default function AdminOrdersPage() {
                       </button>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Tiền COD chỉ có sau khi GHN giao, nên nút hiện lúc đơn Đang giao.
+                  Backend cũng từ chối ghi trên đơn đã giao hoặc đã đóng. */}
+              {viewingOrder.payment_method === 'cod' && !viewingOrder.is_paid && viewingOrder.status === 'shipping' && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-amber-900 mb-1 flex items-center gap-2">
+                    <Banknote className="w-4 h-4" /> Tiền thu hộ COD
+                  </h3>
+                  {confirmPaidId === viewingOrder.id ? (
+                    <>
+                      <p className="text-sm text-amber-900 mb-3">
+                        Xác nhận GHN đã thu <strong>{formatCurrency(viewingOrder.final_amount)}</strong> của đơn này?
+                        Thao tác này không hoàn tác được.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleMarkCodPaid(viewingOrder)}
+                          disabled={markingPaid}
+                          className="px-4 py-2 text-sm rounded-lg bg-amber-700 text-white font-medium hover:bg-amber-800 disabled:opacity-50 flex items-center gap-2"
+                        >
+                          {markingPaid && <Loader2 className="w-4 h-4 animate-spin" />}
+                          Xác nhận đã thu
+                        </button>
+                        <button
+                          onClick={() => setConfirmPaidId(null)}
+                          disabled={markingPaid}
+                          className="px-4 py-2 text-sm rounded-lg border border-amber-300 bg-white text-amber-900 font-medium hover:bg-amber-100 disabled:opacity-50"
+                        >
+                          Để sau
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-amber-900 mb-3">
+                        Chưa ghi nhận tiền. Người mua chỉ bấm được Đã nhận hàng sau khi tiền được ghi.
+                      </p>
+                      <button
+                        onClick={() => setConfirmPaidId(viewingOrder.id)}
+                        className="px-4 py-2 text-sm rounded-lg border border-amber-300 bg-white text-amber-900 font-medium hover:bg-amber-100"
+                      >
+                        Ghi đã thu {formatCurrency(viewingOrder.final_amount)}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 
