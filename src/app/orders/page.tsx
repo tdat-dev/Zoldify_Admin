@@ -468,8 +468,9 @@ export default function AdminOrdersPage() {
                   {confirmPaidId === viewingOrder.id ? (
                     <>
                       <p className="text-sm text-amber-900 mb-3">
-                        Xác nhận GHN đã thu <strong>{formatCurrency(viewingOrder.final_amount)}</strong> của đơn này?
-                        Thao tác này không hoàn tác được.
+                        Sổ cái sẽ ghi nhận <strong>{formatCurrency(viewingOrder.final_amount)}</strong> cho đơn này
+                        (tiền hàng {formatCurrency(viewingOrder.total_amount)}, phí ship {formatCurrency(viewingOrder.shipping_fee)}).
+                        Đối chiếu với bảng COD của GHN trước khi xác nhận, thao tác này không hoàn tác được.
                       </p>
                       <div className="flex flex-wrap gap-2">
                         <button
