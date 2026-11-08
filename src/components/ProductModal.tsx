@@ -6,6 +6,7 @@ import { productService } from '@/services/product.service';
 import { categoryService } from '@/services/category.service';
 import { uploadService } from '@/services/upload.service';
 import { useToast } from '@/components/Toast';
+import ConditionDetailsView from '@/components/ConditionDetailsView';
 
 export type ProductModalMode = 'add' | 'edit' | 'view';
 
@@ -348,11 +349,13 @@ export default function ProductModal({ isOpen, onClose, onSuccess, mode, product
                       disabled={isReadOnly}
                       className={`w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${isReadOnly ? 'bg-gray-50' : 'border-gray-300 bg-white'}`}
                     >
-                      <option value="new">Mới</option>
-                      <option value="like_new">Như mới</option>
-                      <option value="good">Tốt</option>
-                      <option value="fair">Trung bình</option>
-                      <option value="used">Đã sử dụng</option>
+                      {/* Cùng thang 6 mức với web và app. */}
+                      <option value="new">Mới 100%</option>
+                      <option value="like_new">Như mới 99%</option>
+                      <option value="good">Tốt 95%</option>
+                      <option value="fair">Khá 85–90%</option>
+                      <option value="used">Cũ 70–80%</option>
+                      <option value="refurbished">Tân trang</option>
                     </select>
                   </div>
                   <div className="flex items-center pt-6">
@@ -369,6 +372,13 @@ export default function ProductModal({ isOpen, onClose, onSuccess, mode, product
                     </label>
                   </div>
                 </div>
+
+                {mode !== 'add' && product && (
+                  <ConditionDetailsView
+                    note={product.condition_note}
+                    details={product.condition_details}
+                  />
+                )}
 
               </div>
             </div>
