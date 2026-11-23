@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Users, Package, ShoppingCart, DollarSign, Plus, List, ChevronRight, History, Loader2, FolderOpen } from 'lucide-react';
+import { Users, Package, ShoppingCart, DollarSign, Plus, List, ChevronRight, Loader2, FolderOpen } from 'lucide-react';
 import { orderService } from '@/services/order.service';
+import { RecentActivity } from '@/components/dashboard/RecentActivity';
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({ total_users: 0, total_products: 0, total_orders: 0, total_revenue: 0 });
@@ -139,21 +140,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 lg:col-span-2 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-gray-800">Hoạt động gần đây</h2>
-            <button className="text-xs text-blue-600 hover:text-blue-700 font-medium">Xem tất cả</button>
-          </div>
-          <div className="flex-1 flex flex-col items-center justify-center text-center py-10 border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3 text-gray-600">
-              <History className="w-8 h-8" />
-            </div>
-            <h3 className="text-gray-800 font-medium mb-1">Chưa có hoạt động nào</h3>
-            <p className="text-gray-600 text-sm max-w-xs">
-              Các hoạt động mới sẽ xuất hiện tại đây khi hệ thống bắt đầu vận hành.
-            </p>
-          </div>
-        </div>
+        <RecentActivity />
       </div>
     </div>
   );

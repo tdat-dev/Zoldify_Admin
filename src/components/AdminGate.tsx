@@ -50,7 +50,7 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
             </div>
             <h1 className="text-2xl font-bold text-slate-800">Zoldify Admin</h1>
             <p className="mt-1 text-sm text-slate-500">
-              Đăng nhập tài khoản Quản trị viên (Cổng 3002)
+              Đăng nhập bằng tài khoản quản trị viên
             </p>
           </div>
 
